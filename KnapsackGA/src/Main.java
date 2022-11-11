@@ -74,7 +74,7 @@ public class Main {
         return  bestIndividuals;
     }
 
-    public static void selectBest(HashMap<Integer, ArrayList<Integer>> bestIndividuals, int[] weights, int[]values){
+    public static void selectBest(HashMap<Integer, ArrayList<Integer>> bestIndividuals, int[] weights, int[]values, int knapsackSize){
         int totalValue = 0, count = 0, totalWeight = 0;
         ArrayList<Integer> bestIndividual;
         for(Entry<Integer, ArrayList<Integer>> entry : bestIndividuals.entrySet()){
@@ -88,7 +88,7 @@ public class Main {
                 totalWeight += weights[i];
             }
         }
-        System.out.println("Number Of Items = "+count+", Total Weight = "+ totalWeight+", Total Value = " + totalValue);
+        System.out.println("Number Of Items = "+count+", Total Weight = "+ totalWeight+", Total Value = " + totalValue + ", knapsack size: " + knapsackSize);
     }
 
     public static ArrayList<ArrayList<Integer>> populationInit(int itemsNum) {
@@ -127,7 +127,6 @@ public class Main {
         for (int i = 0; i < size; i += 2) {
             double randomProbability = random.nextDouble(1);
             int singlePointCrossover = random.nextInt((chromosomes.get(1).size() - 1) - 1) + 1;
-            //System.out.println("RandomProb " + randomProbability + " SPC " + singlePointCrossover);
 
             if (randomProbability <= pc) {
                 for (int j = 0; j < singlePointCrossover; j++) {
@@ -208,30 +207,20 @@ public class Main {
             }
             System.out.println("TEST CASE "+ (i+1) +": ");
             bestIndividuals = new HashMap<>();
-            //System.out.println("Chromosomes ");
             chromosomes = populationInit(itemsNum);
             chromosomesSize = chromosomes.size();
             fitness = fitnessCalc(weights, values, chromosomes, itemsNum, knapsackSize);
-            //System.out.println("Best");
             addBest(chromosomes, bestIndividuals);
             for (int k = 0; k < generationNum-1; k++) {
                 parentsInd = rouletteWheel(fitness, chromosomesSize);
-                //System.out.println("offSprings ");
                 offSpring = crossover(parentsInd, chromosomes);
-                //System.out.println("Mutation");
                 mutation(offSpring);
                 replacement(chromosomes, offSpring);
-                //System.out.println("NewGene");
-                //System.out.println(chromosomes);
                 fitness = fitnessCalc(weights, values, chromosomes, itemsNum, knapsackSize);
-                //System.out.println("Best");
                 addBest(chromosomes, bestIndividuals);
-                if(k == generationNum-2){
-                    selectBest(bestIndividuals, weights, values);
-                    System.out.println();
-                }
             }
-
+            selectBest(bestIndividuals, weights, values, knapsackSize);
+            System.out.println();
         }
 
 
