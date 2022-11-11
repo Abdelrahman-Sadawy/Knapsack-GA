@@ -1,12 +1,12 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-
+import java.util.Map.Entry;
 public class Main {
 
     static final double pc = 0.5;
     static final double pm = 0.01;
-    static final int generationNum = 3;
+    static final int generationNum = 100;
 
     static int bestValue = 0;
     static int bestValueInd = 0;
@@ -60,20 +60,40 @@ public class Main {
             } else {
                 fitness.add(sumOfValues);
             }
-
-            bestValue = Collections.max(fitness);
-            for (int i = 0; i < fitness.size(); i++) {
-                if (fitness.get(i) == bestValue)
-                    bestValueInd = i;
-            }
-
+        }
+        bestValue = Collections.max(fitness);
+        for (int i = 0; i < fitness.size(); i++) {
+            if (fitness.get(i) == bestValue)
+                bestValueInd = i;
         }
         return fitness;
     }
 
+    public static HashMap<Integer, ArrayList<Integer>> addBest(ArrayList<ArrayList<Integer>> chromosomes, HashMap<Integer, ArrayList<Integer>> bestIndividuals){
+        bestIndividuals.put(bestValue,chromosomes.get(bestValueInd));
+        return  bestIndividuals;
+    }
+
+    public static void selectBest(HashMap<Integer, ArrayList<Integer>> bestIndividuals, int[] weights, int[]values){
+        int totalValue = 0, count = 0, totalWeight = 0;
+        ArrayList<Integer> bestIndividual;
+        for(Entry<Integer, ArrayList<Integer>> entry : bestIndividuals.entrySet()){
+            if(entry.getKey()>totalValue)
+                totalValue = entry.getKey();
+        }
+        bestIndividual = bestIndividuals.get(totalValue);
+        for(int i = 0; i < bestIndividual.size(); i++){
+            if(bestIndividual.get(i) == 1) {
+                System.out.println("Item " + ++count + ": Weight: " + weights[i] + ", Value: " + values[i]);
+                totalWeight += weights[i];
+            }
+        }
+        System.out.println("Number Of Items = "+count+", Total Weight = "+ totalWeight+", Total Value = " + totalValue);
+    }
+
     public static ArrayList<ArrayList<Integer>> populationInit(int itemsNum) {
         Random random = new Random();
-        int populationSize = random.nextInt(20 - 5) + 5;
+        int populationSize = random.nextInt(50 - 5) + 5;
         ArrayList<ArrayList<Integer>> chromosomes = new ArrayList<>();
         for (int i = 0; i < populationSize; i++) {
             chromosomes.add(new ArrayList<>());
@@ -127,10 +147,7 @@ public class Main {
                 }
             }
         }
-
-
         return offSprings;
-
     }
 
     public static ArrayList<ArrayList<Integer>> mutation(ArrayList<ArrayList<Integer>> offSpring) {
@@ -164,7 +181,7 @@ public class Main {
 
 
     public static void main(String[] args) throws FileNotFoundException {
-        File file = new File("input.txt");
+        File file = new File("knapsack_input.txt");
         Scanner sc = new Scanner(file);
         int testCaseNum = sc.nextInt();
         int knapsackSize;
@@ -176,7 +193,7 @@ public class Main {
         ArrayList<Integer> fitness;
         ArrayList<Integer> parentsInd;
         ArrayList<ArrayList<Integer>> offSpring;
-        ArrayList<ArrayList<Integer>> bestSolution;
+        HashMap<Integer ,ArrayList<Integer>> bestIndividuals;
 
         for (int i = 0; i < testCaseNum; i++) {
             knapsackSize = sc.nextInt();
@@ -189,20 +206,30 @@ public class Main {
                 values[j] = sc.nextInt();
 
             }
-            System.out.println("Chromosomes ");
-            System.out.println(chromosomes = populationInit(itemsNum));
-            for (int k = 0; k < generationNum; k++) {
-                fitness = fitnessCalc(weights, values, chromosomes, itemsNum, knapsackSize);
-                chromosomesSize = chromosomes.size();
-                System.out.println(parentsInd = rouletteWheel(fitness, chromosomesSize));
-                System.out.println("offSprings ");
-                System.out.println(offSpring = crossover(parentsInd, chromosomes));
-                System.out.println("Mutation");
-                System.out.println(mutation(offSpring));
+            System.out.println("TEST CASE "+ (i+1) +": ");
+            bestIndividuals = new HashMap<>();
+            //System.out.println("Chromosomes ");
+            chromosomes = populationInit(itemsNum);
+            chromosomesSize = chromosomes.size();
+            fitness = fitnessCalc(weights, values, chromosomes, itemsNum, knapsackSize);
+            //System.out.println("Best");
+            addBest(chromosomes, bestIndividuals);
+            for (int k = 0; k < generationNum-1; k++) {
+                parentsInd = rouletteWheel(fitness, chromosomesSize);
+                //System.out.println("offSprings ");
+                offSpring = crossover(parentsInd, chromosomes);
+                //System.out.println("Mutation");
+                mutation(offSpring);
                 replacement(chromosomes, offSpring);
-                System.out.println("NewGene");
-                System.out.println(chromosomes);
-
+                //System.out.println("NewGene");
+                //System.out.println(chromosomes);
+                fitness = fitnessCalc(weights, values, chromosomes, itemsNum, knapsackSize);
+                //System.out.println("Best");
+                addBest(chromosomes, bestIndividuals);
+                if(k == generationNum-2){
+                    selectBest(bestIndividuals, weights, values);
+                    System.out.println();
+                }
             }
 
         }
