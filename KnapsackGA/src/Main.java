@@ -1,7 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
-import java.util.Map.Entry;
+
 public class Main {
 
     static final double pc = 0.5;
@@ -61,34 +61,29 @@ public class Main {
                 fitness.add(sumOfValues);
             }
         }
-        bestValue = Collections.max(fitness);
-        for (int i = 0; i < fitness.size(); i++) {
-            if (fitness.get(i) == bestValue)
-                bestValueInd = i;
-        }
         return fitness;
     }
 
-    public static HashMap<Integer, ArrayList<Integer>> addBest(ArrayList<ArrayList<Integer>> chromosomes, HashMap<Integer, ArrayList<Integer>> bestIndividuals){
-        bestIndividuals.put(bestValue,chromosomes.get(bestValueInd));
-        return  bestIndividuals;
-    }
-
-    public static void selectBest(HashMap<Integer, ArrayList<Integer>> bestIndividuals, int[] weights, int[]values, int knapsackSize){
-        int totalValue = 0, count = 0, totalWeight = 0;
+    public static void selectBestChromosome(ArrayList<Integer> fitness, ArrayList<ArrayList<Integer>> chromosomes, int[] weights, int[] values, int knapsackSize){
         ArrayList<Integer> bestIndividual;
-        for(Entry<Integer, ArrayList<Integer>> entry : bestIndividuals.entrySet()){
-            if(entry.getKey()>totalValue)
-                totalValue = entry.getKey();
+        bestValue = Collections.max(fitness);
+        int totalValue = 0, count = 0, totalWeight = 0;
+        for (int i = 0; i < fitness.size(); i++) {
+            if (fitness.get(i) == bestValue){
+                bestValueInd = i;
+                break;
+            }
         }
-        bestIndividual = bestIndividuals.get(totalValue);
+        bestIndividual = chromosomes.get(bestValueInd);
+        totalValue = bestValue;
         for(int i = 0; i < bestIndividual.size(); i++){
             if(bestIndividual.get(i) == 1) {
                 System.out.println("Item " + ++count + ": Weight: " + weights[i] + ", Value: " + values[i]);
                 totalWeight += weights[i];
             }
         }
-        System.out.println("Number Of Items = "+count+", Total Weight = "+ totalWeight+", Total Value = " + totalValue + ", knapsack size: " + knapsackSize);
+        System.out.println("Number Of Items = " + count + ", Total Weight = "+ totalWeight + ", Total Value = " + totalValue + ", knapsack size: " + knapsackSize);
+
     }
 
     public static ArrayList<ArrayList<Integer>> populationInit(int itemsNum) {
@@ -177,8 +172,6 @@ public class Main {
         }
     }
 
-
-
     public static void main(String[] args) throws FileNotFoundException {
         File file = new File("knapsack_input.txt");
         Scanner sc = new Scanner(file);
@@ -192,7 +185,6 @@ public class Main {
         ArrayList<Integer> fitness;
         ArrayList<Integer> parentsInd;
         ArrayList<ArrayList<Integer>> offSpring;
-        HashMap<Integer ,ArrayList<Integer>> bestIndividuals;
 
         for (int i = 0; i < testCaseNum; i++) {
             knapsackSize = sc.nextInt();
@@ -206,20 +198,17 @@ public class Main {
 
             }
             System.out.println("TEST CASE "+ (i+1) +": ");
-            bestIndividuals = new HashMap<>();
             chromosomes = populationInit(itemsNum);
             chromosomesSize = chromosomes.size();
             fitness = fitnessCalc(weights, values, chromosomes, itemsNum, knapsackSize);
-            addBest(chromosomes, bestIndividuals);
             for (int k = 0; k < generationNum-1; k++) {
                 parentsInd = rouletteWheel(fitness, chromosomesSize);
                 offSpring = crossover(parentsInd, chromosomes);
                 mutation(offSpring);
                 replacement(chromosomes, offSpring);
                 fitness = fitnessCalc(weights, values, chromosomes, itemsNum, knapsackSize);
-                addBest(chromosomes, bestIndividuals);
             }
-            selectBest(bestIndividuals, weights, values, knapsackSize);
+            selectBestChromosome(fitness, chromosomes, weights, values, knapsackSize);
             System.out.println();
         }
 
